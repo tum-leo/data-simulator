@@ -23,8 +23,12 @@ public class Table {
         return t;
     }
 
-    public void addTuple(ArrayList<Object> tuple) {
+    public void createInitialValues(){};
 
+    public void addTuple(ArrayList<Object> tuple) {
+        for(int i = 0; i < table.size(); i++){
+            table.get(i).add(tuple.get(i));
+        }
     }
 
     public ArrayList<Object> getTuple(ArrayList<Object> key) {

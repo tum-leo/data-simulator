@@ -24,7 +24,7 @@ public class Controller {
     }
 
     public void control(){
-
+        this.createDataModel();
     }
 
     public DataModel createDataModel(){
