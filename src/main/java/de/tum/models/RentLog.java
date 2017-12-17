@@ -8,7 +8,7 @@ import javax.persistence.*;
 
 @Data
 @Entity
-@Table(name = "customers")
+@Table(name = "rent_log")
 @Builder
 public class RentLog {
 
