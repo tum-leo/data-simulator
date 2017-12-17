@@ -32,7 +32,7 @@ public class MasterDataProvider extends ModelAware {
     }
 
     private void provideStations() {
-        stationRepository.save(Stations.stations);
+        stations.save(Stations.stations);
     }
 
 }

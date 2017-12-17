@@ -17,13 +17,26 @@ public class DataSimulator extends ModelAware {
 
     @PostConstruct
     public void initSimulation(){
-        // Run Simulation
+
+        // Clear Database
+        clearDatabase();
+
+        /*
+            SIMULATION START
+         */
 
         masterDataProvider.provide();
 
-        // Shutdown Application
+        /*
+            SIMULATION END
+         */
+
         log.debug("Simulation ended. Application will now shut down...");
-//        applicationContext.close();
+    }
+
+    private void clearDatabase() {
+        stations.deleteAll();
+        customers.deleteAll();
     }
 
 }

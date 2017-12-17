@@ -10,6 +10,6 @@ public abstract class ModelAware {
     protected CustomerRepository customers;
 
     @Autowired
-    protected StationRepository stationRepository;
+    protected StationRepository stations;
 
 }
