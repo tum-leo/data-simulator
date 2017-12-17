@@ -8,7 +8,7 @@ import javax.persistence.*;
 
 @Data
 @Entity
-@Table(name = "customers")
+@Table(name = "bike_types")
 @Builder
 public class BikeType {
 
