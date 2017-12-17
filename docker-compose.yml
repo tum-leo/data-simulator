@@ -1,0 +1,12 @@
+version: "2"
+services:
+
+  # Postgresql Database
+  db:
+    image: "skalera/postgres:latest"
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: "leo"
+      POSTGRES_PASSWORD: "leo"
+      POSTGRES_DB: "leo"
