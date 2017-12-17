@@ -1,8 +1,9 @@
 package de.tum;
 
-import de.tum.models.Customer;
+import de.tum.simulators.MasterDataProvider;
 import de.tum.util.ModelAware;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -11,26 +12,18 @@ import javax.annotation.PostConstruct;
 @Slf4j
 public class DataSimulator extends ModelAware {
 
+    @Autowired
+    private MasterDataProvider masterDataProvider;
+
     @PostConstruct
     public void initSimulation(){
         // Run Simulation
 
-        // TODO Simualtion
-        addMasterData();
+        masterDataProvider.provide();
 
         // Shutdown Application
         log.debug("Simulation ended. Application will now shut down...");
 //        applicationContext.close();
-    }
-
-    private void addMasterData() {
-        Customer c1 = new Customer();
-        c1.setName("hello again");
-        customers.save(c1);
-
-        for (Customer customer : customers.findAll()) {
-            log.debug(customer.getName());
-        }
     }
 
 }
