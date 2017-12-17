@@ -1,6 +1,7 @@
 package de.tum.models;
 
 
+import lombok.Builder;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -8,6 +9,7 @@ import javax.persistence.*;
 @Data
 @Entity
 @Table(name = "customers")
+@Builder
 public class Station {
 
     @Id
@@ -15,5 +17,7 @@ public class Station {
     private Integer id;
 
     private String name;
+    private String longitude;
+    private String latitude;
 
 }
