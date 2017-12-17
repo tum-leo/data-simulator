@@ -1,4 +1,4 @@
-package de.tum.datamodel.Tables;
+package de.tum.models;
 
 public class RepairLog extends Table{
 
