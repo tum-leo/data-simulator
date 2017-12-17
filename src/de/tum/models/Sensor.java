@@ -1,10 +1,9 @@
-package de.tum.datamodel.Tables;
+package de.tum.models;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
-public class Sensors extends Table {
-    public Sensors(){
+public class Sensor extends Table {
+    public Sensor(){
         super(2); // Columns: 1. SensorID Integer 2. Name String
 
         this.createInitialValues();
