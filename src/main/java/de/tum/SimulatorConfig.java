@@ -9,4 +9,6 @@ public class SimulatorConfig {
     @Value("${simulator.customers.number}")
     public int numberCustomers;
 
+    @Value("${simulator.mechanics.number}")
+    public int numberMechanics;
 }
