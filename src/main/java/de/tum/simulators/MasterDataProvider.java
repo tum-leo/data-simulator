@@ -2,6 +2,7 @@ package de.tum.simulators;
 
 import de.tum.data.Stations;
 import de.tum.models.Customer;
+import de.tum.models.Mechanic;
 import de.tum.util.FakeData;
 import de.tum.util.ModelAware;
 import io.codearte.jfairy.producer.person.Person;
@@ -20,6 +21,7 @@ public class MasterDataProvider extends ModelAware {
         provideBikeTypes();
         provideBikes();
         provideStations();
+        provideMechanics();
 
     }
 
@@ -51,7 +53,27 @@ public class MasterDataProvider extends ModelAware {
     }
 
     private void provideStations() {
+        log.debug("Provide Stations");
+
         stations.save(Stations.stations);
+    }
+
+    private void provideMechanics(){
+        log.debug("Provide Mechanics");
+
+        List<Mechanic> mechanicList = new ArrayList<>();
+
+        for (int i = 0; i < config.numberMechanics; i++) {
+            Person person = FakeData.getPerson();
+            mechanicList.add(
+                    Mechanic.builder()
+                            .firstName(person.getFirstName())
+                            .lastName(person.getLastName())
+                            .build()
+            );
+        }
+
+        mechanics.save(mechanicList);
     }
 
 }

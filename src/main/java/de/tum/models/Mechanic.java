@@ -10,18 +10,17 @@ import javax.persistence.*;
 
 @Data
 @Entity
-@Table(name = "stations")
+@Table(name = "mechanics")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Station {
+public class Mechanic {
 
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Integer id;
 
-    private String name;
-    private String longitude;
-    private String latitude;
+    private String firstName;
+    private String lastName;
 
 }
