@@ -1,9 +1,7 @@
 package de.tum.util;
 
 import de.tum.SimulatorConfig;
-import de.tum.repositories.CustomerRepository;
-import de.tum.repositories.MechanicRepository;
-import de.tum.repositories.StationRepository;
+import de.tum.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public abstract class ModelAware {
@@ -19,5 +17,11 @@ public abstract class ModelAware {
 
     @Autowired
     protected MechanicRepository mechanics;
+
+    @Autowired
+    protected BikeTypeRepository bikeTypes;
+
+    @Autowired
+    protected BikeRepository bikes;
 
 }

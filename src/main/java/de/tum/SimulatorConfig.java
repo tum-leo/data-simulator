@@ -11,4 +11,7 @@ public class SimulatorConfig {
 
     @Value("${simulator.mechanics.number}")
     public int numberMechanics;
+
+    @Value("${simulator.bikes.number}")
+    public int numberBikes;
 }
