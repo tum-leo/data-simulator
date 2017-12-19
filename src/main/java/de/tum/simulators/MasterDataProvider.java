@@ -1,6 +1,9 @@
 package de.tum.simulators;
 
+import de.tum.data.BikeTypes;
 import de.tum.data.Stations;
+import de.tum.models.Bike;
+import de.tum.models.BikeType;
 import de.tum.models.Customer;
 import de.tum.models.Mechanic;
 import de.tum.util.FakeData;
@@ -9,8 +12,7 @@ import io.codearte.jfairy.producer.person.Person;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -45,11 +47,30 @@ public class MasterDataProvider extends ModelAware {
     }
 
     private void provideBikeTypes() {
+        log.debug("Provide Bike Types");
+
+        bikeTypes.save(BikeTypes.bikeTypes);
 
     }
 
     private void provideBikes() {
 
+        log.debug("Provide Bikes");
+
+        List<Bike> bikeList = new ArrayList<>();
+
+        List<BikeType> types = BikeTypes.bikeTypes;
+
+        for (int i = 0; i < config.numberBikes; i++) {
+            Collections.shuffle(types);
+            bikeList.add(
+                    Bike.builder()
+                            .bikeType(types.get(0).getId())
+                            .build()
+            );
+        }
+
+        bikes.save(bikeList);
     }
 
     private void provideStations() {

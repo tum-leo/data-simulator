@@ -21,6 +21,10 @@ public class Stations {
         stations.add(Station.builder().name("Technische Universität (Stadt)").longitude("48.148691").latitude("11.568705").build());
         stations.add(Station.builder().name("Technische Universität (Garching)").longitude("48.263418").latitude("11.669933").build());
         stations.add(Station.builder().name("Allianz Arena").longitude("48.216976").latitude("11.624931").build());
+        stations.add(Station.builder().name("BMW Welt").longitude("48.177613").latitude("11.555148").build());
+        stations.add(Station.builder().name("Olypmpia Park").longitude("48.171457").latitude("11.547682").build());
+        stations.add(Station.builder().name("Hauptbahnhof").longitude("48.141534").latitude("11.558489").build());
+        stations.add(Station.builder().name("Schloss Nympfenburg").longitude("48.158148").latitude("11.504189").build());
     }
 
 }

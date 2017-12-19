@@ -20,6 +20,6 @@ public class Bike {
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Integer id;
 
-    private String name;
+    private Integer bikeType;
 
 }
