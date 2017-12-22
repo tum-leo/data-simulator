@@ -1,6 +1,7 @@
 package de.tum.models;
 
 
+import de.tum.util.sensorConfig.AirPressure;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,5 +22,8 @@ public class Bike {
     private Integer id;
 
     private Integer bikeType;
+
+    @Transient
+    private AirPressure airPressureSensor;
 
 }

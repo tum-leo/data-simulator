@@ -22,4 +22,6 @@ public class BikeType {
 
     private String name;
 
+    private Double initialAirPressure;
+
 }
