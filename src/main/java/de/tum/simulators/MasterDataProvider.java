@@ -30,10 +30,6 @@ public class MasterDataProvider extends ModelAware {
 
     private void provideCustomers() {
 
-        log.debug("Truncate Customer Table");
-
-        customers.deleteAll();
-
         log.debug("Provide Customers");
 
         List<Customer> customerList = new ArrayList<>();
@@ -52,9 +48,6 @@ public class MasterDataProvider extends ModelAware {
     }
 
     private void provideBikeTypes() {
-        log.debug("Truncate Bike Types table");
-
-        bikeTypes.deleteAll();
 
         log.debug("Provide Bike Types");
 
@@ -63,10 +56,6 @@ public class MasterDataProvider extends ModelAware {
     }
 
     private void provideBikes() {
-
-        log.debug("Truncate Bike table");
-
-        bikes.deleteAll();
 
         log.debug("Provide Bikes");
 
@@ -77,14 +66,11 @@ public class MasterDataProvider extends ModelAware {
         for (int i = 0; i < config.numberBikes; i++) {
             bikeList.add(this.createRandomBike(types));
         }
-        
+
         bikes.save(bikeList);
     }
 
     private void provideStations() {
-        log.debug("Truncate Stations table");
-
-        stations.deleteAll();
 
         log.debug("Provide Stations");
 
@@ -92,10 +78,6 @@ public class MasterDataProvider extends ModelAware {
     }
 
     private void provideMechanics(){
-
-        log.debug("Truncate Mechanics table");
-
-        mechanics.deleteAll();
 
         log.debug("Provide Mechanics");
 
@@ -119,49 +101,10 @@ public class MasterDataProvider extends ModelAware {
 
         return Bike.builder()
                 .bikeType(types.get(0).getId())
-                .airPressureSensor(this.createRandomAirPressureConfig(types.get(0).getInitialAirPressure()))
+                .airPressureSensor(null)
                 .build();
     }
 
-    private AirPressure createRandomAirPressureConfig(Double initialAirPressure){
 
-        Random random = new Random();
-
-        Double tempFP = random.nextDouble()/10;
-
-        return AirPressure.builder()
-                .flatProbability(tempFP)
-                .initialAirPressure(initialAirPressure)
-                .currentAirPressure(initialAirPressure)
-                .reducingValueInterval(this.createReducingValueIntverval())
-                .valueStartingPointInterval(this.createStartingPointIntverval())
-                .build();
-    }
-
-    private Interval createReducingValueIntverval(){
-
-        Random random = new Random();
-
-        Double lL = random.nextDouble()/10;
-        Double uL = lL + (random.nextDouble()/10);
-
-        return Interval.builder()
-                .lowerLimit(lL)
-                .upperLimit(uL)
-                .build();
-    }
-
-    private Interval createStartingPointIntverval(){
-
-        Random random = new Random();
-
-        Double lL = (random.nextDouble() - 0.5)/10;
-        Double uL = lL + (random.nextDouble()/10);
-
-        return Interval.builder()
-                .lowerLimit(lL)
-                .upperLimit(uL)
-                .build();
-    }
 
 }

@@ -24,4 +24,13 @@ public abstract class ModelAware {
     @Autowired
     protected BikeRepository bikes;
 
+    @Autowired
+    protected RepairLogRepository repairLogs;
+
+    @Autowired
+    protected LendingLogRepository lendingLogs;
+
+    @Autowired
+    protected SensorDataRepository sensorDataValues;
+
 }

@@ -1,15 +1,18 @@
 package de.tum.util;
 
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Interval {
+
+    @Getter
+    @Setter
     private double lowerLimit;
+    @Getter
+    @Setter
     private double upperLimit;
 
 
