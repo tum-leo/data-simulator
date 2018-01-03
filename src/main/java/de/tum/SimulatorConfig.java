@@ -14,4 +14,16 @@ public class SimulatorConfig {
 
     @Value("${simulator.bikes.number}")
     public int numberBikes;
+
+    @Value("${simulator.time.startDate}")
+    public String timeStartDate;
+
+    @Value("${simulator.time.endDate}")
+    public String timeEndDate;
+
+    @Value("${simulator.lending.number}")
+    public int numberLending;
+
+    @Value("${simulator.lending.maximumLendingHours}")
+    public int maximumLendingHours;
 }

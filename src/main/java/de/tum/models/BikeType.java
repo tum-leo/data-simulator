@@ -24,4 +24,6 @@ public class BikeType {
 
     private Double initialAirPressure;
 
+    private Double minimumAirPressure;
+
 }

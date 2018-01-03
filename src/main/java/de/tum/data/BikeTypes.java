@@ -10,8 +10,8 @@ public class BikeTypes {
     public static final List<BikeType> bikeTypes = new ArrayList<>();
 
     static {
-        bikeTypes.add(BikeType.builder().name("E-Bike").initialAirPressure(4.0).build());
-        bikeTypes.add(BikeType.builder().name("City Bike").initialAirPressure(3.0).build());
+        bikeTypes.add(BikeType.builder().name("E-Bike").initialAirPressure(4.0).minimumAirPressure(1.0).build());
+        bikeTypes.add(BikeType.builder().name("City Bike").initialAirPressure(3.0).minimumAirPressure(1.0).build());
     }
 
 }

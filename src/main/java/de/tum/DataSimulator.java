@@ -1,6 +1,7 @@
 package de.tum;
 
 import de.tum.simulators.MasterDataProvider;
+import de.tum.simulators.TimeMachine;
 import de.tum.util.ModelAware;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,8 @@ public class DataSimulator extends ModelAware {
 
     @Autowired
     private MasterDataProvider masterDataProvider;
+    @Autowired
+    private TimeMachine timeMachine;
 
     @PostConstruct
     public void initSimulation(){
@@ -26,6 +29,7 @@ public class DataSimulator extends ModelAware {
          */
 
         masterDataProvider.provide();
+        timeMachine.start();
 
         /*
             SIMULATION END
@@ -35,8 +39,14 @@ public class DataSimulator extends ModelAware {
     }
 
     private void clearDatabase() {
+        log.debug("Clear database");
+
         stations.deleteAll();
         customers.deleteAll();
+        bikeTypes.deleteAll();
+        bikes.deleteAll();
+        mechanics.deleteAll();
+
     }
 
 }

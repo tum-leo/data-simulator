@@ -26,4 +26,7 @@ public class Bike {
     @Transient
     private AirPressure airPressureSensor;
 
+    @Transient
+    private Integer kilometerCount;
+
 }
