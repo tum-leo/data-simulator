@@ -1,6 +1,7 @@
 package de.tum.simulators;
 
 import de.tum.data.BikeTypes;
+import de.tum.data.Sensors;
 import de.tum.data.Stations;
 import de.tum.models.Bike;
 import de.tum.models.BikeType;
@@ -22,6 +23,7 @@ public class MasterDataProvider extends ModelAware {
 
     public void provide() {
         provideCustomers();
+        provideSensors();
         provideBikeTypes();
         provideBikes();
         provideStations();
@@ -43,8 +45,14 @@ public class MasterDataProvider extends ModelAware {
                             .build()
             );
         }
-
         customers.save(customerList);
+    }
+
+    private void provideSensors() {
+
+        log.debug("Provide Sensors");
+
+        sensors.save(Sensors.sensors);
     }
 
     private void provideBikeTypes() {
@@ -52,7 +60,6 @@ public class MasterDataProvider extends ModelAware {
         log.debug("Provide Bike Types");
 
         bikeTypes.save(BikeTypes.bikeTypes);
-
     }
 
     private void provideBikes() {

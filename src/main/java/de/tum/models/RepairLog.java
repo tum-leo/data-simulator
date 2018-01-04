@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ManyToAny;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -26,5 +28,7 @@ public class RepairLog {
     private Integer mechanic;
 
     private Date repairTime;
+
+    private Integer sensor;
 
 }

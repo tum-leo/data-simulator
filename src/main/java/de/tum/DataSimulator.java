@@ -46,6 +46,10 @@ public class DataSimulator extends ModelAware {
         bikeTypes.deleteAll();
         bikes.deleteAll();
         mechanics.deleteAll();
+        sensors.deleteAll();
+        lendingLogs.deleteAll();
+        repairLogs.deleteAll();
+        sensorDataValues.deleteAll();
 
     }
 
