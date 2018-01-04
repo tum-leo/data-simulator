@@ -26,4 +26,7 @@ public class SimulatorConfig {
 
     @Value("${simulator.lending.maximumLendingHours}")
     public int maximumLendingHours;
+
+    @Value("${simulator.repair.avgDrivingKPH}")
+    public double avgDrivingKPH;
 }

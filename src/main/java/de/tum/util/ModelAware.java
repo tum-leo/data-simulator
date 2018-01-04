@@ -33,4 +33,7 @@ public abstract class ModelAware {
     @Autowired
     protected SensorDataRepository sensorDataValues;
 
+    @Autowired
+    protected SensorRepository sensors;
+
 }

@@ -26,4 +26,6 @@ public class BikeType {
 
     private Double minimumAirPressure;
 
+    private Double wearingKilometer;
+
 }

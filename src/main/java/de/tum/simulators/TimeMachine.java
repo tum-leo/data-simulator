@@ -31,6 +31,7 @@ public class TimeMachine extends ModelAware{
     private List<RepairLog> repairLogList;
     private List<Station> stationList;
     private List<BikeType> bikeTypeList;
+    private List<Sensor> sensorList;
 
 
     public void start(){
@@ -67,6 +68,7 @@ public class TimeMachine extends ModelAware{
         mechanicList = (List<Mechanic>) mechanics.findAll();
         stationList = (List<Station>) stations.findAll();
         bikeTypeList = (List<BikeType>) bikeTypes.findAll();
+        sensorList = (List<Sensor>) sensors.findAll();
     }
 
     private void initializeLogLists(){
@@ -80,20 +82,18 @@ public class TimeMachine extends ModelAware{
     private void initializeAirPressureConfig(){
 
         for(Bike bike : bikeList){
-            bike.setAirPressureSensor(this.createRandomAirPressureConfig(this.getTypeInitialAirPressure(bike)));
+            bike.setAirPressureSensor(this.createRandomAirPressureConfig(this.getType(bike).getInitialAirPressure()));
         }
     }
 
-    private Double getTypeInitialAirPressure(Bike bike){
-        Double tempPressure = null;
+    private BikeType getType(Bike bike){
 
         for(BikeType typ : bikeTypeList){
             if(typ.getId() == bike.getBikeType()){
-                tempPressure = typ.getInitialAirPressure();
+                return typ;
             }
         }
-
-        return tempPressure;
+        return null;
     }
 
     private AirPressure createRandomAirPressureConfig(Double initialAirPressure){
@@ -150,11 +150,9 @@ public class TimeMachine extends ModelAware{
     }
 
     private void simulateBikeData(){
-
         for(Bike bike : bikeList){
             this.updateNewAirPressure(bike);
         }
-
     }
 
     private void updateNewAirPressure(Bike bike){
@@ -162,13 +160,14 @@ public class TimeMachine extends ModelAware{
 
         if(random.nextDouble() < tempAirPressure.getFlatProbability()){
             tempAirPressure.setCurrentAirPressure(0.0);
+            this.createSensorValueLog(this.getSensorID("Air Pressure"), bike.getId(), 0.0, currentSimulationDate);
         }
         else{
-            this.reduceAirPressure(tempAirPressure);
+            this.reduceAirPressure(tempAirPressure, bike.getId());
         }
     }
 
-    private void reduceAirPressure(AirPressure airPressure){
+    private void reduceAirPressure(AirPressure airPressure, Integer bikeID){
         Double tempValue = airPressure.getCurrentAirPressure();
 
         Interval tempInterval = airPressure.getValueStartingPointInterval();
@@ -178,10 +177,19 @@ public class TimeMachine extends ModelAware{
         tempValue = tempValue - (tempInterval.getLowerLimit() + (tempInterval.getUpperLimit() - tempInterval.getLowerLimit()) * random.nextDouble());
 
         airPressure.setCurrentAirPressure(tempValue);
+        this.createSensorValueLog(this.getSensorID("Air Pressure"), bikeID, tempValue, currentSimulationDate);
+    }
+
+    private void createSensorValueLog(Integer sensorID, Integer bikeID, Double sensorValue, Date timestamp){
+        sensorDataList.add(SensorData.builder()
+                    .sensor(sensorID)
+                    .bike(bikeID)
+                    .value(sensorValue)
+                    .timestamp(timestamp)
+                    .build());
     }
 
     private void simulateLendingData(){
-
         LendingLog tempLendingLog;
         for(int i = 0; i < config.numberLending; i++){
             tempLendingLog = this.createLendingLog();
@@ -192,15 +200,13 @@ public class TimeMachine extends ModelAware{
     private LendingLog createLendingLog(){
 
         Collections.shuffle(customerList);
-        Collections.shuffle(stationList);
         Collections.shuffle(bikeList);
 
         Integer tempBikeId = 0;
 
         Date tempStartDate = DateUtils.addSeconds(currentSimulationDate, random.nextInt(86400));
 
-
-        while(this.bikeIsAvailable(bikeList.get(tempBikeId), tempStartDate)){
+        while(!this.bikeIsAvailable(bikeList.get(tempBikeId), tempStartDate)){
             tempBikeId++;
             if(tempBikeId > bikeList.size()){
                 return null;
@@ -208,7 +214,7 @@ public class TimeMachine extends ModelAware{
         }
 
         return LendingLog.builder()
-                .bike(tempBikeId)
+                .bike(bikeList.get(tempBikeId).getId())
                 .customer(customerList.get(0).getId())
                 .startStation(stationList.get(random.nextInt(stationList.size())).getId())
                 .endStation(stationList.get(random.nextInt(stationList.size())).getId())
@@ -220,7 +226,7 @@ public class TimeMachine extends ModelAware{
     private Boolean bikeIsAvailable(Bike bike, Date startDate){
         Boolean isAvailable = true;
 
-        isAvailable = bike.getAirPressureSensor().getCurrentAirPressure() > 1.0 ? isAvailable : false;
+        isAvailable = bike.getAirPressureSensor().getCurrentAirPressure() > this.getType(bike).getMinimumAirPressure() ? isAvailable : false;
         isAvailable = this.lastBikeLending(bike).before(startDate) ? isAvailable : false;
 
         return isAvailable;
@@ -234,6 +240,7 @@ public class TimeMachine extends ModelAware{
             tempDate = DateUtils.addDays(tempDate,-1);
         } catch (ParseException e) {
             e.printStackTrace();
+            log.error("Could not parse config.timeStartDate: " + config.timeStartDate);
         }
 
         for(LendingLog lendingLog : lendingLogList){
@@ -250,43 +257,86 @@ public class TimeMachine extends ModelAware{
         Date tempRepairTimeStamp = DateUtils.addSeconds(currentSimulationDate, 24*60*60-1);
         Collections.shuffle(mechanicList);
 
-        for(Bike bike : bikeList){
-            if(this.bikeRequiresRepair(bike, tempRepairTimeStamp)) this.repairBike(bike, tempRepairTimeStamp);
-        }
+        Integer[] sensorIDs;
 
+        for(Bike bike : bikeList){
+            sensorIDs = this.bikeRequiresRepair(bike, tempRepairTimeStamp);
+            if(sensorIDs != null) this.repairBike(bike, tempRepairTimeStamp, sensorIDs);
+        }
     }
 
-    private Boolean bikeRequiresRepair(Bike bike, Date repairDate){
-        Boolean requiresRepair = false;
+    private Integer[] bikeRequiresRepair(Bike bike, Date repairDate){
+        ArrayList<Integer> sensorsToRepair = new ArrayList<>();
 
         if(repairDate.after(this.lastBikeLending(bike))){
-            requiresRepair = bike.getAirPressureSensor().getCurrentAirPressure() <=  this.getTypeMinimumAirPressure(bike) ? true : requiresRepair;
-       //TODO:Considering driven kilometer 
+            if(bike.getAirPressureSensor().getCurrentAirPressure() <=  this.getType(bike).getMinimumAirPressure()) sensorsToRepair.add(this.getSensorID("Air Pressure"));
+            if(this.getBikeKilometer(bike, repairDate, this.lastBikeRepair(bike, this.getSensorID("Wearing"))) >= this.getType(bike).getWearingKilometer()) sensorsToRepair.add(this.getSensorID("Wearing"));
         }
 
-        return requiresRepair;
+        if(sensorsToRepair.isEmpty()) return null;
+
+        return sensorsToRepair.toArray(new Integer[sensorsToRepair.size()]);
     }
 
-    private void repairBike(Bike bike, Date repairTime){
-        bike.getAirPressureSensor().setCurrentAirPressure(this.getTypeInitialAirPressure(bike));
+    private void repairBike(Bike bike, Date repairTime, Integer[] sensorIDs){
+        bike.getAirPressureSensor().setCurrentAirPressure(this.getType(bike).getInitialAirPressure());
+        this.createSensorValueLog(this.getSensorID("Air Pressure"), bike.getId(), this.getType(bike).getInitialAirPressure(), repairTime);
 
-        repairLogList.add(RepairLog.builder()
-                                    .bike(bike.getId())
-                                    .mechanic(mechanicList.get(random.nextInt(mechanicList.size())).getId())
-                                    .repairTime(repairTime)
-                                    .build());
+        Integer mechanicID = mechanicList.get(random.nextInt(mechanicList.size())).getId();
+
+        for(Integer sensor : sensorIDs){
+            repairLogList.add(RepairLog.builder()
+                    .bike(bike.getId())
+                    .mechanic(mechanicID)
+                    .repairTime(repairTime)
+                    .sensor(sensor)
+                    .build());
+        }
     }
 
+    private Double getBikeKilometer(Bike bike, Date repairDate,Date lastWearingRepair){
 
-    private Double getTypeMinimumAirPressure(Bike bike){
-        Double tempPressure = null;
+        Double kilometer = 0.0;
 
-        for(BikeType typ : bikeTypeList){
-            if(typ.getId() == bike.getBikeType()){
-                tempPressure = typ.getMinimumAirPressure();
+        for(LendingLog lendingLog : lendingLogList){
+            if(lendingLog.getBike() == bike.getId() && repairDate.after(lastWearingRepair)){
+                kilometer += this.getLendingLogKilometer(lendingLog);
             }
         }
-
-        return tempPressure;
+        return kilometer;
     }
+
+    private Double getLendingLogKilometer(LendingLog lendingLog){
+        return (lendingLog.getEndDate().getTime() - lendingLog.getStartDate().getTime())/1000 * (config.avgDrivingKPH/(60*60));
+    }
+
+    private Integer getSensorID(String name){
+
+        for(Sensor sensor : sensorList){
+            if(name.contentEquals(sensor.getName())){
+                return sensor.getId();
+            }
+        }
+        log.error("Sensor name '" + name + "' not found");
+        return null;
+    }
+
+    private Date lastBikeRepair(Bike bike, Integer sensorID){
+
+        Date tempDate = null;
+        try {
+            tempDate = dF.parse(config.timeStartDate);
+            tempDate = DateUtils.addDays(tempDate,-1);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        for(RepairLog repairLog : repairLogList){
+            if(repairLog.getBike() == bike.getId() && repairLog.getSensor() == sensorID && repairLog.getRepairTime().after(tempDate)){
+                tempDate = repairLog.getRepairTime();
+            }
+        }
+        return tempDate;
+    }
+
 }
