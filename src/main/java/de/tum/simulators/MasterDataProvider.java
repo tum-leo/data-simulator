@@ -7,19 +7,24 @@ import de.tum.models.Bike;
 import de.tum.models.BikeType;
 import de.tum.models.Customer;
 import de.tum.models.Mechanic;
+import de.tum.util.DatabaseHelper;
 import de.tum.util.FakeData;
-import de.tum.util.Interval;
 import de.tum.util.ModelAware;
-import de.tum.util.sensorConfig.AirPressure;
 import io.codearte.jfairy.producer.person.Person;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Service
 @Slf4j
 public class MasterDataProvider extends ModelAware {
+
+    @Autowired
+    private DatabaseHelper databaseHelper;
 
     public void provide() {
         provideCustomers();
@@ -45,21 +50,21 @@ public class MasterDataProvider extends ModelAware {
                             .build()
             );
         }
-        customers.save(customerList);
+        databaseHelper.bulkSave(customerList);
     }
 
     private void provideSensors() {
 
         log.debug("Provide Sensors");
 
-        sensors.save(Sensors.sensors);
+        databaseHelper.bulkSave(Sensors.sensors);
     }
 
     private void provideBikeTypes() {
 
         log.debug("Provide Bike Types");
 
-        bikeTypes.save(BikeTypes.bikeTypes);
+        databaseHelper.bulkSave(BikeTypes.bikeTypes);
     }
 
     private void provideBikes() {
@@ -74,14 +79,14 @@ public class MasterDataProvider extends ModelAware {
             bikeList.add(this.createRandomBike(types));
         }
 
-        bikes.save(bikeList);
+        databaseHelper.bulkSave(bikeList);
     }
 
     private void provideStations() {
 
         log.debug("Provide Stations");
 
-        stations.save(Stations.stations);
+        databaseHelper.bulkSave(Stations.stations);
     }
 
     private void provideMechanics(){
@@ -99,7 +104,8 @@ public class MasterDataProvider extends ModelAware {
                             .build()
             );
         }
-        mechanics.save(mechanicList);
+
+        databaseHelper.bulkSave(mechanicList);
     }
 
     private Bike createRandomBike(List<BikeType> types){
