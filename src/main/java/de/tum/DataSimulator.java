@@ -2,27 +2,46 @@ package de.tum;
 
 import de.tum.simulators.MasterDataProvider;
 import de.tum.simulators.TimeMachine;
+import de.tum.util.DatabaseHelper;
 import de.tum.util.ModelAware;
+import de.tum.util.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import javax.persistence.EntityManager;
+import javax.transaction.Transactional;
 
 @Service
 @Slf4j
+@Scope(proxyMode = ScopedProxyMode.INTERFACES)
+@Transactional
 public class DataSimulator extends ModelAware {
 
     @Autowired
     private MasterDataProvider masterDataProvider;
+
     @Autowired
     private TimeMachine timeMachine;
 
+    @Autowired
+    private DatabaseHelper databaseHelper;
+
+    @Autowired
+    private EntityManager em;
+
     @PostConstruct
-    public void initSimulation(){
+    public void initSimulation() {
+
+        Timer timer = new Timer();
+
+        timer.start();
 
         // Clear Database
-        clearDatabase();
+        databaseHelper.clearDatabase();
 
         /*
             SIMULATION START
@@ -35,22 +54,10 @@ public class DataSimulator extends ModelAware {
             SIMULATION END
          */
 
+        timer.stop();
+        timer.printTime();
+
         log.debug("Simulation ended. Application will now shut down...");
-    }
-
-    private void clearDatabase() {
-        log.debug("Clear database");
-
-        stations.deleteAll();
-        customers.deleteAll();
-        bikeTypes.deleteAll();
-        bikes.deleteAll();
-        mechanics.deleteAll();
-        sensors.deleteAll();
-        lendingLogs.deleteAll();
-        repairLogs.deleteAll();
-        sensorDataValues.deleteAll();
-
     }
 
 }
