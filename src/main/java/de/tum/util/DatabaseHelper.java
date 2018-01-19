@@ -2,20 +2,30 @@ package de.tum.util;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.jdbc.core.namedparam.SqlParameterSourceUtils;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Table;
+import javax.sql.DataSource;
 import javax.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 @Slf4j
 @Service
 public class DatabaseHelper {
 
     @Autowired
-    EntityManager em;
+    private EntityManager em;
 
-    private static final int batchSize = 50;
+    @Autowired
+    private DataSource dataSource;
+
+    private static final int BATCH_SIZE = 10000;
     
     @Transactional
     public void clearDatabase() {
@@ -45,30 +55,56 @@ public class DatabaseHelper {
 
     private int lastBatch = 0;
 
-    @Transactional
+//    @Transactional
     public <T> void bulkSave(Collection<T> entities) {
+
+        this.batchInsert(entities);
+
         int i = 0;
         int currentBatch = 0;
         int size = entities.size();
-        int batchesTotal = size / batchSize;
+
+        List<T> batchList = new ArrayList<>();
+
+        int batchesTotal = size / BATCH_SIZE;
         for (T t : entities) {
-            em.persist(t);
+//            em.persist(t);
+            batchList.add(t);
             i++;
-            if (i % batchSize == 0) {
-                em.flush();
-                em.clear();
-                currentBatch++;
+            if (i % BATCH_SIZE == 0) {
+//                em.flush();
+//                em.clear();
+                batchInsert(batchList);
+                batchList.clear();
                 logProgress(currentBatch, batchesTotal, size - i);
+                currentBatch++;
             }
         }
-        em.flush();
-        em.clear();
+        batchInsert(batchList);
+//        em.flush();
+//        em.clear();
     }
 
     private void logProgress(int currentBatch, int batchesTotal, int entitiesLeft) {
         int perc = Math.round(((float) currentBatch) / ((float) batchesTotal) * 100f);
-        if (perc % 10 == 0 && perc != lastBatch)
-            log.debug("Processing... {}, {} entities left", perc + "%", entitiesLeft);
+//        if (perc % 2 == 0 && perc != lastBatch)
+        log.debug("Processing... {}, {} entities left", perc + "%", entitiesLeft);
         lastBatch = perc;
     }
+
+
+    private void batchInsert(Collection<?> items) {
+
+        if (items.size() == 0)
+            return;
+
+        String tableName = items.stream().findFirst().get().getClass().getDeclaredAnnotation(Table.class).name();
+
+        SimpleJdbcInsert insert = new SimpleJdbcInsert(dataSource).withTableName(tableName).usingGeneratedKeyColumns("id");
+        SqlParameterSource[] batch = SqlParameterSourceUtils.createBatch(items.toArray());
+
+        insert.executeBatch(batch);
+
+    }
+
 }

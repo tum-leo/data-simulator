@@ -47,6 +47,10 @@ public class DataSimulator extends ModelAware {
             SIMULATION START
          */
 
+//        Customer testCustomer = Customer.builder().firstName("Tobi").lastName("Something").build();
+//        em.persist(testCustomer);
+//        customers.save();
+
         masterDataProvider.provide();
         timeMachine.start();
 
