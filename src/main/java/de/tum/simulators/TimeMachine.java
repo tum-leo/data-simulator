@@ -128,8 +128,8 @@ public class TimeMachine extends ModelAware {
 
         Random random = new Random();
 
-        Double lL = random.nextDouble() / 10;
-        Double uL = lL + (random.nextDouble() / 10);
+        Double lL = random.nextDouble()/10;
+        Double uL = lL + (random.nextDouble());
 
         return Interval.builder()
                 .lowerLimit(lL)
@@ -311,7 +311,7 @@ public class TimeMachine extends ModelAware {
         Double kilometer = 0.0;
 
         for (LendingLog lendingLog : lendingLogList.get(bike)) {
-            if (repairDate.after(lastWearingRepair)) {
+            if (lendingLog.getEndDate().after(lastWearingRepair) && lendingLog.getEndDate().before(repairDate)) {
                 kilometer += this.getLendingLogKilometer(lendingLog);
             }
         }
