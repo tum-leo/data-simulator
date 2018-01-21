@@ -113,7 +113,7 @@ public class TimeMachine extends ModelAware {
 
         Random random = new Random();
 
-        Double tempFP = random.nextDouble() / 10;
+        Double tempFP = random.nextDouble() / 100;
 
         return AirPressure.builder()
                 .flatProbability(tempFP)
