@@ -58,7 +58,7 @@ public class DatabaseHelper {
 //    @Transactional
     public <T> void bulkSave(Collection<T> entities) {
 
-        this.batchInsert(entities);
+        //this.batchInsert(entities);
 
         int i = 0;
         int currentBatch = 0;
