@@ -1,0 +1,193 @@
+DROP VIEW air_pressure_last_repair_times CASCADE;
+DROP VIEW air_pressure_points CASCADE;
+DROP VIEW air_pressure_bike_info CASCADE;
+DROP VIEW bike_current_air_pressure_values;
+DROP VIEW bike_stats;
+
+CREATE VIEW
+  air_pressure_last_repair_times AS
+  (
+    SELECT
+      bike,
+      max(repair_time) AS last_repair_time
+    FROM repair_log
+    WHERE
+      sensor = (SELECT id
+                FROM sensors
+                WHERE NAME = 'Air Pressure')
+    GROUP BY bike
+  );
+
+CREATE VIEW
+  air_pressure_points AS
+  (
+    SELECT
+      s.bike,
+      s.value,
+      s.timestamp,
+      repair.last_repair_time,
+      days_between(s.timestamp, now()) AS time
+    FROM sensor_data s
+      INNER JOIN air_pressure_last_repair_times repair ON repair.bike = s.bike
+    WHERE
+      sensor = (SELECT id
+                FROM sensors
+                WHERE NAME = 'Air Pressure')
+      --             AND s.bike = 48602
+      AND TIMESTAMP >= repair.last_repair_time
+    ORDER BY TIMESTAMP DESC
+  );
+
+CREATE VIEW
+  air_pressure_bike_info AS (
+  SELECT
+    r.bike,
+    t.minimum_air_pressure,
+    t.initial_air_pressure,
+    days_between(r.last_repair_time, now()) as days_since_last_repair
+  FROM air_pressure_last_repair_times r
+    INNER JOIN bikes b ON r.bike = b.id
+    INNER JOIN bike_types t ON b.bike_type = t.id
+  ORDER BY r.last_repair_time ASC
+
+);
+
+CREATE VIEW
+  air_pressure_mean_estimates AS
+  (SELECT
+     bike,
+     AVG(time * 1.)  AS xmean,
+     AVG(value * 1.) AS ymean
+   FROM air_pressure_points pd
+   GROUP BY bike
+  );
+
+CREATE VIEW air_pressure_stdev_estimates AS
+  (SELECT
+     pd.bike
+     -- T-SQL STDEV() implementation is not numerically stable
+     ,
+     CASE SUM(POWER(time - xmean, 2))
+     WHEN 0
+       THEN 1
+     ELSE SQRT(SUM(POWER(time - xmean, 2)) / (COUNT(*) - 1)) END  AS xstdev,
+     CASE SUM(POWER(value - ymean, 2))
+     WHEN 0
+       THEN 1
+     ELSE SQRT(SUM(POWER(value - ymean, 2)) / (COUNT(*) - 1)) END AS ystdev
+   FROM air_pressure_points pd
+     INNER JOIN air_pressure_mean_estimates pm ON pm.bike = pd.bike
+   GROUP BY pd.bike, pm.xmean, pm.ymean
+  );
+
+CREATE VIEW
+  air_pressure_standardized_data AS -- increases numerical stability
+  (SELECT
+     pd.bike,
+     (time - xmean) / xstdev           AS xstd,
+     CASE ystdev
+     WHEN 0
+       THEN 0
+     ELSE (value - ymean) / ystdev END AS ystd
+   FROM air_pressure_points pd
+     INNER JOIN air_pressure_stdev_estimates ps ON ps.bike = pd.bike
+     INNER JOIN air_pressure_mean_estimates pm ON pm.bike = pd.bike
+  );
+
+CREATE VIEW
+  air_pressure_standardized_beta_estimates AS
+  (SELECT
+     bike,
+     CASE WHEN SUM(xstd * xstd) = 0
+       THEN 0
+     ELSE SUM(xstd * ystd) / (COUNT(*) - 1) END AS betastd
+   FROM air_pressure_standardized_data
+   GROUP BY bike
+  );
+
+CREATE VIEW
+  air_pressure_regression AS (
+
+  SELECT
+    pb.bike,
+    ymean - xmean * betastd * ystdev / xstdev AS Alpha,
+    betastd * ystdev / xstdev                 AS Beta,
+    CASE ystdev
+    WHEN 0
+      THEN 1
+    ELSE betastd * betastd END                AS R2,
+    betastd                                   AS Correl,
+    betastd * xstdev * ystdev                 AS Covar
+  FROM air_pressure_standardized_beta_estimates pb
+    INNER JOIN air_pressure_stdev_estimates ps ON ps.bike = pb.bike
+    INNER JOIN air_pressure_mean_estimates pm ON pm.bike = pb.bike
+);
+
+CREATE VIEW bike_current_air_pressure_values AS
+  (
+    SELECT
+      s.bike,
+      s.timestamp,
+      s.VALUE
+    FROM (
+           SELECT
+             bike,
+             max(timestamp) AS timestamp
+           FROM sensor_data
+           WHERE
+             sensor = (SELECT id
+                       FROM sensors
+                       WHERE NAME = 'Air Pressure')
+           GROUP BY bike) l INNER JOIN
+      sensor_data s ON l.bike = s.bike AND l.timestamp = s.timestamp
+  );
+
+CREATE VIEW air_pressure_results AS (
+  SELECT
+    r.bike,
+    i.days_since_last_repair,
+    i.minimum_air_pressure,
+    i.initial_air_pressure,
+    v.value AS current_value,
+    (v.value - i.minimum_air_pressure) / r.Beta                       AS repair_needed_in_days,
+    r.Beta
+  FROM air_pressure_bike_info i
+    INNER JOIN (SELECT *
+                FROM air_pressure_regression
+                WHERE Beta <> 0) r ON r.bike = i.bike
+    INNER JOIN bike_current_air_pressure_values v ON v.bike = i.bike);
+
+
+CREATE VIEW bike_stats AS (
+ SELECT
+    r.bike,
+    r.days_since_last_repair,
+    r.minimum_air_pressure,
+    r.initial_air_pressure,
+    r.current_value,
+    r.repair_needed_in_days,
+    r.beta,
+    b.bike_type,
+    l.last_lending_date,
+    re.last_repair_date,
+    cs.current_location,
+    CASE
+    	WHEN r.current_value <= r.minimum_air_pressure THEN 3 --DAMAGED
+    	WHEN r.repair_needed_in_days < 3 THEN 2 --CRITICAL
+    	ELSE 1 --AVAILABLE
+    END AS status,
+    CASE
+    	WHEN r.current_value <= r.minimum_air_pressure THEN 'Air Pressure'
+    	WHEN r.repair_needed_in_days < 3 THEN 'Air Pressure'
+    	ELSE '-'
+    END AS damage
+  FROM air_pressure_results r
+    INNER JOIN bikes b ON r.bike = b.id
+    INNER JOIN bike_types t ON b.bike_type = t.id
+    INNER JOIN (SELECT bike, MAX(end_date) AS last_lending_date FROM lending_log GROUP BY bike) AS l ON r.bike = l.bike
+    INNER JOIN (SELECT bike, MAX(repair_time) AS last_repair_date FROM repair_log GROUP BY bike) AS re ON r.bike = re.bike
+    INNER JOIN (SELECT s.name AS current_location, l.bike AS bike FROM stations s JOIN
+    				(SELECT l1.ID, l1.end_station, l2.bike FROM lending_log l1,
+    					(SELECT bike, MAX(end_date) AS last_lending_date FROM lending_log GROUP BY bike) l2 WHERE l1.bike = l2.bike AND l1.end_date = l2.last_lending_date) AS l ON s.ID = l.end_station) AS cs ON r.bike = cs.bike);
+
+    
