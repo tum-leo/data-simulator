@@ -364,6 +364,19 @@ CREATE VIEW status_count AS
     count(status) AS count
   FROM bike_stats
   GROUP BY status;
+  
+DROP VIEW repair_report;
+  
+CREATE VIEW repair_report AS  
+	 SELECT
+		TO_DATE(repair_time) AS date,
+		COUNT(*) AS all_damages,
+		SUM(CASE WHEN s.name LIKE 'Air Pressure' THEN 1 ELSE 0 END) AS airpressure_count,
+		SUM(CASE WHEN s.name LIKE 'Wearing' THEN 1 ELSE 0 END) AS wearing_count 
+	FROM repair_log r
+	INNER JOIN sensors s on r.sensor = s.id
+	GROUP BY TO_DATE(REPAIR_TIME) 
+	ORDER BY DATE;
 
 
 
