@@ -29,4 +29,9 @@ public class SimulatorConfig {
 
     @Value("${simulator.repair.avgDrivingKPH}")
     public double avgDrivingKPH;
+
+    @Value("${simulator.repair.probability}")
+    public double repairProbability;
+
+
 }

@@ -128,8 +128,8 @@ public class TimeMachine extends ModelAware {
 
         Random random = new Random();
 
-        Double lL = random.nextDouble()/10;
-        Double uL = lL + (random.nextDouble());
+        Double lL = (random.nextDouble()/5);
+        Double uL = lL + (random.nextDouble()/3.0);
 
         return Interval.builder()
                 .lowerLimit(lL)
@@ -187,10 +187,10 @@ public class TimeMachine extends ModelAware {
     private void reduceAirPressure(AirPressure airPressure, Integer bikeID) {
         Double tempValue = airPressure.getCurrentAirPressure();
 
-        Interval tempInterval = airPressure.getValueStartingPointInterval();
-        tempValue = tempValue + (tempInterval.getLowerLimit() + (tempInterval.getUpperLimit() - tempInterval.getLowerLimit()) * random.nextDouble());
+        //Interval tempInterval = airPressure.getValueStartingPointInterval();
+        //tempValue = tempValue + (tempInterval.getLowerLimit() + (tempInterval.getUpperLimit() - tempInterval.getLowerLimit()) * random.nextDouble());
 
-        tempInterval = airPressure.getReducingValueInterval();
+        Interval tempInterval = airPressure.getReducingValueInterval();
         tempValue = tempValue - (tempInterval.getLowerLimit() + (tempInterval.getUpperLimit() - tempInterval.getLowerLimit()) * random.nextDouble());
 
         airPressure.setCurrentAirPressure(tempValue);
@@ -271,7 +271,11 @@ public class TimeMachine extends ModelAware {
 
         for (Bike bike : bikeList.values()) {
             sensorIDs = this.bikeRequiresRepair(bike, tempRepairTimeStamp);
-            if (sensorIDs != null) this.repairBike(bike, tempRepairTimeStamp, sensorIDs);
+            if (sensorIDs != null) {
+                if(random.nextDouble() > config.repairProbability) {
+                    this.repairBike(bike, tempRepairTimeStamp, sensorIDs);
+                }
+            }
         }
     }
 
