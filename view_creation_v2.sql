@@ -311,6 +311,7 @@ CREATE VIEW bike_stats AS
     ),
       current_locations AS (
         SELECT
+          s.id AS current_location_id,
           s.name AS current_location,
           l.bike AS bike
         FROM stations s
@@ -334,6 +335,7 @@ CREATE VIEW bike_stats AS
     l.last_lending_date,
     re.last_repair_date,
     cs.current_location,
+    current_location_id,
     LEAST(r.repair_needed_in_days, wf.days_left) AS repair_needed_in_days,
     CASE
     	WHEN LEAST(r.repair_needed_in_days, wf.days_left) < 1 THEN 3 --DAMAGED
@@ -371,14 +373,14 @@ DROP VIEW repair_report;
   
 CREATE VIEW repair_report AS  
 	 SELECT
-		TO_DATE(repair_time) AS date,
+		WEEK(TO_DATE(repair_time))  AS week,
 		COUNT(*) AS all_damages,
 		SUM(CASE WHEN s.name LIKE 'Air Pressure' THEN 1 ELSE 0 END) AS airpressure_count,
 		SUM(CASE WHEN s.name LIKE 'Wearing' THEN 1 ELSE 0 END) AS wearing_count 
 	FROM repair_log r
 	INNER JOIN sensors s on r.sensor = s.id
-	GROUP BY TO_DATE(REPAIR_TIME) 
-	ORDER BY DATE;
+	GROUP BY WEEK(TO_DATE(REPAIR_TIME))
+	ORDER BY week;
 	
 DROP VIEW damage_report;
 	
@@ -394,6 +396,24 @@ CREATE VIEW damage_report AS
 	FROM bike_stats 
 	WHERE damage NOT LIKE '-'
 	GROUP BY damage;
+	
+DROP VIEW map_stations;
+
+CREATE VIEW map_stations AS
+	SELECT
+		s.id,
+		s.name,
+		s.latitude || ';' || s.longitude || ';0' as position,
+		SUM(CASE WHEN bs.status = 1 THEN 1 ELSE 0 END) as bikes_available,
+		SUM(CASE WHEN bs.status = 2 THEN 1 ELSE 0 END) as bikes_critical,
+		SUM(CASE WHEN bs.status = 3 THEN 1 ELSE 0 END) as bikes_damaged,
+		count(*) as radius
+	FROM stations s
+	INNER JOIN BIKE_STATS bs ON s.id = bs.current_location_id
+	GROUP BY s.id, s.name, s.latitude, s.longitude;
+	
+
+
 
 
 
