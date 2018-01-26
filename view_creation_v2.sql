@@ -1,5 +1,4 @@
 DROP VIEW air_pressure_results;
-DROP VIEW bike_stats;
 
 CREATE VIEW air_pressure_results AS
 
@@ -185,11 +184,11 @@ CREATE VIEW stations_distances AS
   )
 
   SELECT
-    s1.id                                                   AS start_station_id,
-    s1.name                                                 AS start_station_name,
-    s2.id                                                   AS end_station_id,
-    s2.name                                                 AS end_station_name,
-    s1.coordinates.st_distance(s2.coordinates, 'kilometer') AS distance
+    s1.id                                                   		AS start_station_id,
+    s1.name                                                 		AS start_station_name,
+    s2.id                                                   		AS end_station_id,
+    s2.name                                                 		AS end_station_name,
+    s1.coordinates.st_distance(s2.coordinates, 'kilometer') * 5 	AS distance
   FROM stations_geodata s1, stations_geodata s2;
 
 
@@ -292,6 +291,8 @@ CREATE VIEW wearing_forecast AS
     INNER JOIN bike_types ty ON ty.id = b.bike_type
     INNER JOIN wearing_results wr ON wr.bike = b.id;
 
+DROP VIEW bike_stats;
+
 CREATE VIEW bike_stats AS
 
   WITH last_lendings AS (
@@ -325,42 +326,42 @@ CREATE VIEW bike_stats AS
 
   SELECT
     r.bike,
-    r.days_since_last_repair,
-    r.minimum_air_pressure,
-    r.initial_air_pressure,
-    r.current_value,
-    r.repair_needed_in_days,
-    r.beta,
-    t.name as bike_type,
+    r.current_value					AS current_airpressure,
+    r.repair_needed_in_days			AS repair_needed_in_days_airpressure,
+    t.name 							AS bike_type,
+    wf.days_left					AS repair_needed_in_days_wearing,
+    wf.wearing_since_last_repair	AS current_wearing_kilometer,
     l.last_lending_date,
     re.last_repair_date,
     cs.current_location,
+    LEAST(r.repair_needed_in_days, wf.days_left) AS repair_needed_in_days,
     CASE
-    WHEN r.current_value <= r.minimum_air_pressure
-      THEN 3 --DAMAGED
-    WHEN r.repair_needed_in_days <= 3
-      THEN 2 --CRITICAL
-    ELSE 1 --AVAILABLE
+    	WHEN LEAST(r.repair_needed_in_days, wf.days_left) < 1 THEN 3 --DAMAGED
+    	WHEN LEAST(r.repair_needed_in_days, wf.days_left) < 3 THEN 2 --CRITICAL
+    	ELSE 1 --AVAILABLE
     END AS status,
     CASE
-    WHEN r.current_value <= r.minimum_air_pressure
-      THEN 'Air Pressure'
-    WHEN r.repair_needed_in_days <= 3
-      THEN 'Air Pressure'
-    ELSE '-'
+    	WHEN r.repair_needed_in_days < 3 AND r.repair_needed_in_days <= wf.days_left THEN 'Air Pressure'
+    	WHEN wf.days_left < 3 AND r.repair_needed_in_days > wf.days_left THEN 'Wearing'
+    	ELSE '-'
     END AS damage
   FROM air_pressure_results r
     INNER JOIN bikes b ON r.bike = b.id
     INNER JOIN bike_types t ON b.bike_type = t.id
-    INNER JOIN last_lendings AS l ON r.bike = l.bike
-    INNER JOIN last_repairs AS re ON r.bike = re.bike
-    INNER JOIN current_locations AS cs ON r.bike = cs.bike;
+    INNER JOIN last_lendings l ON r.bike = l.bike
+    INNER JOIN last_repairs re ON r.bike = re.bike
+    INNER JOIN current_locations cs ON r.bike = cs.bike
+    INNER JOIN wearing_forecast wf ON wf.bike = r.bike;
 
 DROP VIEW status_count;
 
 CREATE VIEW status_count AS
   SELECT
-    status        AS status,
+  	CASE
+  		WHEN status = 3 THEN 'DAMAGED'
+  		WHEN status = 2 THEN 'CRITICAL'
+  		ELSE 'AVAILABLE'
+  	END AS status,
     count(status) AS count
   FROM bike_stats
   GROUP BY status;
@@ -377,6 +378,21 @@ CREATE VIEW repair_report AS
 	INNER JOIN sensors s on r.sensor = s.id
 	GROUP BY TO_DATE(REPAIR_TIME) 
 	ORDER BY DATE;
+	
+DROP VIEW damage_report;
+	
+CREATE VIEW damage_report AS 
+	SELECT
+		 damage,
+		 count(status) AS count,
+		 CASE 
+		 	WHEN damage LIKE 'Wearing' THEN count(status) * 50
+		 	WHEN damage LIKE 'Air Pressure' THEN count(status) * 10
+		 	ELSE 0 
+		 END AS repair_cost
+	FROM bike_stats 
+	WHERE damage NOT LIKE '-' 
+	GROUP BY damage;
 
 
 
