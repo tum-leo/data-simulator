@@ -341,8 +341,9 @@ CREATE VIEW bike_stats AS
     	ELSE 1 --AVAILABLE
     END AS status,
     CASE
-    	WHEN r.repair_needed_in_days < 3 AND r.repair_needed_in_days <= wf.days_left THEN 'Air Pressure'
-    	WHEN wf.days_left < 3 AND r.repair_needed_in_days > wf.days_left THEN 'Wearing'
+    	WHEN r.repair_needed_in_days < 3 AND  wf.days_left < 3 THEN 'Air Pressure, Wearing'
+    	WHEN r.repair_needed_in_days < 3 AND  wf.days_left >= 3 THEN 'Air Pressure'
+    	WHEN r.repair_needed_in_days >= 3 AND  wf.days_left < 3 THEN 'Wearing'
     	ELSE '-'
     END AS damage
   FROM air_pressure_results r
@@ -384,15 +385,16 @@ DROP VIEW damage_report;
 CREATE VIEW damage_report AS 
 	SELECT
 		 damage,
-		 count(status) AS count,
+		 count(*) AS count,
 		 CASE 
-		 	WHEN damage LIKE 'Wearing' THEN count(status) * 50
-		 	WHEN damage LIKE 'Air Pressure' THEN count(status) * 10
+		 	WHEN damage LIKE '%Wearing%' THEN count(status) * 50
+		 	WHEN damage LIKE '%Air Pressure%' THEN count(status) * 10
 		 	ELSE 0 
 		 END AS repair_cost
 	FROM bike_stats 
-	WHERE damage NOT LIKE '-' 
+	WHERE damage NOT LIKE '-'
 	GROUP BY damage;
+
 
 
 
