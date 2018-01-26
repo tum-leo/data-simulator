@@ -387,9 +387,9 @@ CREATE VIEW damage_report AS
 		 damage,
 		 count(*) AS count,
 		 CASE 
-		 	WHEN damage LIKE '%Wearing%' THEN count(status) * 50
-		 	WHEN damage LIKE '%Air Pressure%' THEN count(status) * 10
-		 	ELSE 0 
+		 	WHEN damage LIKE 'Air Pressure' THEN count(status) * 10
+		 	WHEN damage LIKE 'Wearing' THEN count(status) * 50
+		 	ELSE count(*) * 10
 		 END AS repair_cost
 	FROM bike_stats 
 	WHERE damage NOT LIKE '-'
