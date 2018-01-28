@@ -373,14 +373,15 @@ DROP VIEW repair_report;
   
 CREATE VIEW repair_report AS  
 	 SELECT
-		WEEK(TO_DATE(repair_time))  AS week,
-		COUNT(*) AS all_damages,
+		TO_DATE(repair_time)  AS date,
+		COUNT(*) AS all_repairs,
 		SUM(CASE WHEN s.name LIKE 'Air Pressure' THEN 1 ELSE 0 END) AS airpressure_count,
 		SUM(CASE WHEN s.name LIKE 'Wearing' THEN 1 ELSE 0 END) AS wearing_count 
 	FROM repair_log r
 	INNER JOIN sensors s on r.sensor = s.id
-	GROUP BY WEEK(TO_DATE(REPAIR_TIME))
-	ORDER BY week;
+	WHERE repair_time > add_months(now(),-6)
+	GROUP BY TO_DATE(REPAIR_TIME)
+	ORDER BY date;
 	
 DROP VIEW damage_report;
 	
