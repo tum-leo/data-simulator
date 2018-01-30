@@ -336,6 +336,8 @@ CREATE VIEW bike_stats AS
     re.last_repair_date,
     cs.current_location,
     current_location_id,
+    t.minimum_air_pressure as minimum_air_pressure,
+    t.wearing_kilometer as wearing_kilometer,
     LEAST(r.repair_needed_in_days, wf.days_left) AS repair_needed_in_days,
     CASE
     	WHEN LEAST(r.repair_needed_in_days, wf.days_left) < 1 THEN 3 --DAMAGED
@@ -412,10 +414,3 @@ CREATE VIEW map_stations AS
 	FROM stations s
 	INNER JOIN BIKE_STATS bs ON s.id = bs.current_location_id
 	GROUP BY s.id, s.name, s.latitude, s.longitude;
-	
-
-
-
-
-
-
