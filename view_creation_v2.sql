@@ -327,6 +327,7 @@ CREATE VIEW bike_stats AS
 
   SELECT
     r.bike,
+    CAST(r.bike as varchar) as bike_string,
     r.current_value					AS current_airpressure,
     r.repair_needed_in_days			AS repair_needed_in_days_airpressure,
     t.name 							AS bike_type,
