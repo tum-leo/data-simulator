@@ -340,7 +340,7 @@ CREATE VIEW bike_stats AS
     t.wearing_kilometer as wearing_kilometer,
     LEAST(r.repair_needed_in_days, wf.days_left) AS repair_needed_in_days,
     CASE
-    	WHEN LEAST(r.repair_needed_in_days, wf.days_left) < 1 THEN 3 --DAMAGED
+    	WHEN r.current_value < t.minimum_air_pressure or wf.wearing_since_last_repair > t.wearing_kilometer THEN 3 --DAMAGED
     	WHEN LEAST(r.repair_needed_in_days, wf.days_left) < 3 THEN 2 --CRITICAL
     	ELSE 1 --AVAILABLE
     END AS status,
