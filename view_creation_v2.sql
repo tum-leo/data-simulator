@@ -364,9 +364,9 @@ DROP VIEW status_count;
 CREATE VIEW status_count AS
   SELECT
   	CASE
-  		WHEN status = 3 THEN 'DAMAGED'
-  		WHEN status = 2 THEN 'CRITICAL'
-  		ELSE 'AVAILABLE'
+  		WHEN status = 3 THEN 'Damaged'
+  		WHEN status = 2 THEN 'Critical'
+  		ELSE 'Available'
   	END AS status,
     count(status) AS count
   FROM bike_stats
