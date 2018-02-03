@@ -178,10 +178,10 @@ public class TimeMachine extends ModelAware {
 
         if (random.nextDouble() < tempAirPressure.getFlatProbability()) {
             tempAirPressure.setCurrentAirPressure(0.0);
-            this.createSensorValueLog(this.getSensorID("Air Pressure"), bike.getId(), 0.0, currentSimulationDate);
         } else {
             this.reduceAirPressure(tempAirPressure, bike.getId());
         }
+        this.createSensorValueLog(this.getSensorID("Air Pressure"), bike.getId(), tempAirPressure.getCurrentAirPressure(), currentSimulationDate);
     }
 
     private void reduceAirPressure(AirPressure airPressure, Integer bikeID) {
@@ -194,7 +194,6 @@ public class TimeMachine extends ModelAware {
         tempValue = tempValue - (tempInterval.getLowerLimit() + (tempInterval.getUpperLimit() - tempInterval.getLowerLimit()) * random.nextDouble());
 
         airPressure.setCurrentAirPressure(tempValue);
-        this.createSensorValueLog(this.getSensorID("Air Pressure"), bikeID, tempValue, currentSimulationDate);
     }
 
     private void createSensorValueLog(Integer sensorID, Integer bikeID, Double sensorValue, Date timestamp) {
@@ -265,7 +264,8 @@ public class TimeMachine extends ModelAware {
 
     private void simulateRepairData() {
 
-        Date tempRepairTimeStamp = DateUtils.addSeconds(currentSimulationDate, 24 * 60 * 60 - 1);
+        Date tempRepairTimeStamp = DateUtils.addHours(currentSimulationDate, 18);
+
 
         Integer[] sensorIDs;
 
@@ -308,6 +308,8 @@ public class TimeMachine extends ModelAware {
                     .sensor(sensor)
                     .build());
         }
+        bike.getAirPressureSensor().setReducingValueInterval(this.createReducingValueInterval());
+        bike.getAirPressureSensor().setFlatProbability(random.nextDouble() / 100);
     }
 
     private Double getBikeKilometer(Bike bike, Date repairDate, Date lastWearingRepair) {
