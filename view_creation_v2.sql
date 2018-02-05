@@ -400,7 +400,16 @@ CREATE VIEW damage_report AS
 	FROM bike_stats 
 	WHERE damage NOT LIKE '-'
 	GROUP BY damage;
-	
+
+DROP VIEW damage_report_total;
+
+CREATE VIEW damage_report_total AS
+  SELECT
+    'total' as id,
+    sum(count) as total_damages,
+    sum(repair_cost) as total_repair_cost
+  FROM damage_report;
+
 DROP VIEW map_stations;
 
 CREATE VIEW map_stations AS
